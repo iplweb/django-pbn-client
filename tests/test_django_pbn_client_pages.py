@@ -25,6 +25,24 @@ def test_threaded_model_saver_uses_injected_model_and_save_function():
     assert ThreadedMongoDBSaver is ThreadedModelSaver
 
 
+def test_threaded_model_saver_binds_model_via_class_attribute():
+    # download_pages() instantiates the getter class without passing
+    # model_class, so subclasses that bind the model as a class attribute
+    # must keep working — the constructor must not shadow it with None.
+    calls = []
+    sentinel_model = object()
+
+    class Saver(ThreadedModelSaver):
+        model_class = sentinel_model
+        save_function = staticmethod(
+            lambda element, model: calls.append((element, model))
+        )
+
+    Saver().process_element({"mongoId": "one"})
+
+    assert calls == [({"mongoId": "one"}, sentinel_model)]
+
+
 def test_download_pages_processes_each_page_with_host_progress():
     processed = []
     progress_calls = []
