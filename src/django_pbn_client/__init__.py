@@ -1,5 +1,9 @@
 """Django persistence helpers for data downloaded from PBN."""
 
+from django_pbn_client.download import (
+    DownloadResult,
+    download_to_model,
+)
 from django_pbn_client.models import (
     MAX_TEXT_FIELD_LENGTH,
     BasePBNModel,
@@ -23,11 +27,13 @@ __all__ = [
     "MAX_TEXT_FIELD_LENGTH",
     "BasePBNModel",
     "BasePBNMongoDBModel",
+    "DownloadResult",
     "ThreadedModelSaver",
     "ThreadedMongoDBSaver",
     "ThreadedPageGetter",
     "download_pages",
     "download_pbn_objects",
+    "download_to_model",
     "get_or_download",
     "get_total_count",
     "simple_page_getter",
