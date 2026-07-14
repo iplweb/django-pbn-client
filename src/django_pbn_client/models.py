@@ -104,3 +104,8 @@ class BasePBNMongoDBModel(BasePBNModel):
     def website(self):
         """Return the website stored in the current object version."""
         return self.value("object", "website")
+
+    @property
+    def is_deleted(self):
+        """Whether PBN marks this object as deleted (``status == "DELETED"``)."""
+        return self.status == "DELETED"

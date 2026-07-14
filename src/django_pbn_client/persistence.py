@@ -69,6 +69,28 @@ def upsert_pbn_object(element, model_class, client=None, **extra_fields):
     return _update_changed_fields(instance, values)
 
 
+def get_or_download(
+    model_class,
+    object_id,
+    *,
+    fetch: Callable[[Any], Any],
+    save: Callable[..., Any] = upsert_pbn_object,
+    client: Any = None,
+):
+    """Return the locally stored PBN object, downloading it once if absent.
+
+    ``fetch`` is a callable ``fetch(object_id) -> element`` (typically a PBN
+    client ``get_*_by_id`` method). The remote call runs BEFORE the persistence
+    transaction, so no HTTP happens inside a long-held DB transaction. Returns
+    the stored model instance in both the cache-hit and download paths.
+    """
+    try:
+        return model_class.objects.get(pk=object_id)
+    except model_class.DoesNotExist:
+        element = fetch(object_id)
+        return save(element, model_class, client=client)
+
+
 def get_total_count(elements) -> int | None:
     """Best-effort total used by download progress integrations."""
     total_elements = getattr(elements, "total_elements", None)

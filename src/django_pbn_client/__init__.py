@@ -14,6 +14,7 @@ from django_pbn_client.pages import (
 )
 from django_pbn_client.persistence import (
     download_pbn_objects,
+    get_or_download,
     get_total_count,
     upsert_pbn_object,
 )
@@ -27,6 +28,7 @@ __all__ = [
     "ThreadedPageGetter",
     "download_pages",
     "download_pbn_objects",
+    "get_or_download",
     "get_total_count",
     "simple_page_getter",
     "upsert_pbn_object",

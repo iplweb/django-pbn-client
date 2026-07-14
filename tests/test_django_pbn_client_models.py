@@ -107,3 +107,9 @@ def test_unchanged_upsert_does_not_touch_last_updated_timestamp():
     unchanged = upsert_pbn_object(payload, MirrorRecord)
 
     assert unchanged.last_updated_on == original_timestamp
+
+
+def test_is_deleted_reflects_status():
+    assert MirrorRecord(status="DELETED").is_deleted is True
+    assert MirrorRecord(status="ACTIVE").is_deleted is False
+    assert MirrorRecord(status="").is_deleted is False
