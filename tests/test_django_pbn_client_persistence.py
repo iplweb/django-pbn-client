@@ -4,6 +4,7 @@ from django.db import IntegrityError, connection
 
 from django_pbn_client.persistence import (
     download_pbn_objects,
+    get_or_download,
     get_total_count,
     upsert_pbn_object,
 )
@@ -114,3 +115,55 @@ def test_insert_race_fallback_keeps_outer_transaction_usable():
     assert winner.verified is True
     assert winner.versions == [{"current": True, "object": {}}]
     assert winner.save_calls == 1
+
+
+def test_get_or_download_returns_cached_without_fetch():
+    sentinel = object()
+    fetched = []
+
+    class Manager:
+        def get(self, pk):
+            return sentinel
+
+    class Model:
+        objects = Manager()
+
+        class DoesNotExist(Exception):
+            pass
+
+    def fetch(object_id):
+        fetched.append(object_id)
+        return {"mongoId": object_id}
+
+    result = get_or_download(Model, "abc", fetch=fetch)
+
+    assert result is sentinel
+    assert fetched == []  # brak pobrania, gdy rekord jest w cache
+
+
+def test_get_or_download_downloads_and_saves_when_absent():
+    saved_instance = object()
+    saved = []
+
+    class NotFound(Exception):
+        pass
+
+    class Manager:
+        def get(self, pk):
+            raise NotFound
+
+    class Model:
+        objects = Manager()
+        DoesNotExist = NotFound
+
+    def fetch(object_id):
+        return {"mongoId": object_id, "status": "ACTIVE"}
+
+    def save(element, model_class, client=None):
+        saved.append((element, model_class, client))
+        return saved_instance
+
+    result = get_or_download(Model, "xyz", fetch=fetch, save=save, client="C")
+
+    assert result is saved_instance
+    assert saved == [({"mongoId": "xyz", "status": "ACTIVE"}, Model, "C")]
