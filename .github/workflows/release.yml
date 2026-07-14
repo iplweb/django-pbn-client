@@ -1,0 +1,33 @@
+name: Release to PyPI
+
+# Publikacja przez PyPI Trusted Publishing (OIDC) — bez tokena w sekretach.
+# Wyzwalane utworzeniem GitHub Release. Zbuduj pakiet z tagu wersji i wgraj.
+# Wymaga jednorazowej konfiguracji "Trusted Publisher" po stronie PyPI:
+#   PyPI -> projekt -> Manage -> Publishing -> Add a new pending/publisher:
+#     Owner: iplweb, Repository: django-pbn-client,
+#     Workflow: release.yml, Environment: (puste)
+
+on:
+  release:
+    types: [published]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  pypi-publish:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write # OIDC token dla PyPI Trusted Publishing
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install uv
+        uses: astral-sh/setup-uv@11f9893b081a58869d3b5fccaea48c9e9e46f990 # v8.3.2
+      - name: Build sdist + wheel
+        run: uv build
+      - name: Publish to PyPI (Trusted Publishing)
+        run: uv publish --trusted-publishing always
