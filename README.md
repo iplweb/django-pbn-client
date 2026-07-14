@@ -1,5 +1,9 @@
 # django-pbn-client
 
+[![CI](https://github.com/iplweb/django-pbn-client/actions/workflows/ci.yml/badge.svg)](https://github.com/iplweb/django-pbn-client/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python](https://img.shields.io/badge/python-3.10%20%E2%80%93%203.14-blue.svg)](https://www.python.org/)
+
 Reusable Django models and persistence services for data downloaded from the
 Polish Bibliography Network (PBN).
 
@@ -35,8 +39,35 @@ Concurrent page downloads use threads by default. The optional
 `method="processes"` mode uses the POSIX `fork` start method and is therefore
 not available on Windows.
 
+## Installation
+
+```console
+pip install django-pbn-client
+```
+
+## Development
+
+This package depends on the transport-level
+[`pbn-client`](https://github.com/iplweb/pbn-client) package. Until `pbn-client`
+is published to PyPI, a dev-only `[tool.uv.sources]` entry in `pyproject.toml`
+resolves it from a sibling checkout, so clone both repositories side by side:
+
+```console
+git clone https://github.com/iplweb/pbn-client.git
+git clone https://github.com/iplweb/django-pbn-client.git
+cd django-pbn-client
+```
+
+The source override is ignored when building or publishing wheels, so end users
+still get `pbn-client` from PyPI via the version constraint in
+`[project.dependencies]`.
+
 Run the standalone package tests with:
 
 ```console
 uv run --group dev pytest
 ```
+
+## License
+
+Released under the [MIT License](LICENSE).

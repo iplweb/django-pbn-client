@@ -13,16 +13,45 @@ license-files = ["LICENSE"]
 authors = [
     { name = "Michał Pasternak", email = "michal.dtz@gmail.com" },
 ]
+keywords = ["django", "pbn", "bibliography", "polon", "persistence"]
+classifiers = [
+    "Development Status :: 4 - Beta",
+    "Framework :: Django",
+    "Framework :: Django :: 5.2",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Operating System :: OS Independent",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Programming Language :: Python :: 3.13",
+    "Programming Language :: Python :: 3.14",
+    "Topic :: Software Development :: Libraries :: Python Modules",
+]
 dependencies = [
     "Django>=5.2,<5.3",
     "pbn-client>=0.1.0,<0.2",
 ]
+
+[project.urls]
+Homepage = "https://github.com/iplweb/django-pbn-client"
+Repository = "https://github.com/iplweb/django-pbn-client"
+Issues = "https://github.com/iplweb/django-pbn-client/issues"
 
 [dependency-groups]
 dev = [
     "pytest>=9.1.1,<10",
     "pytest-django>=4.9,<5",
 ]
+
+# Dev-only source override. The published `pbn-client` dependency above is what
+# real installs resolve from PyPI once that package is released. Until then this
+# points uv at the sibling checkout so the package is developable and testable
+# standalone. uv ignores [tool.uv.sources] when building/publishing wheels, so
+# the constraint in [project.dependencies] is unaffected for downstream users.
+[tool.uv.sources]
+pbn-client = { path = "../pbn-client", editable = true }
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/django_pbn_client"]
