@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import logging
-from collections.abc import Callable, Iterable
+from collections.abc import Callable, Iterable, Iterator
 from typing import Any, TypeVar
 
 from django.db import IntegrityError, transaction
@@ -89,6 +89,33 @@ def get_or_download(
     except model_class.DoesNotExist:
         element = fetch(object_id)
         return save(element, model_class, client=client)
+
+
+def sync_dictionary(
+    fetch: Callable[[], Any],
+    upsert: Callable[[Any], Any],
+):
+    """Materialize a PBN dictionary payload, then upsert it atomically.
+
+    ``fetch()`` returns the full dictionary payload (typically a list of
+    elements from a PBN client ``get_*`` method). It runs BEFORE the persistence
+    transaction — a lazy/streamed response is forced to completion first — so no
+    HTTP happens inside a long-held DB transaction. This is the safe counterpart
+    to the anti-pattern of decorating the whole ``download → upsert`` routine
+    with ``@transaction.atomic`` (which opens the transaction across the remote
+    call).
+
+    ``upsert(payload)`` performs the host-specific writes (matching to concrete
+    application models stays in the host) inside a fresh atomic block; its return
+    value is propagated.
+    """
+    payload = fetch()
+    # Only true iterators/generators are lazy; list/dict payloads are already
+    # materialized and must be passed through unchanged.
+    if isinstance(payload, Iterator):
+        payload = list(payload)
+    with transaction.atomic():
+        return upsert(payload)
 
 
 def get_total_count(elements) -> int | None:

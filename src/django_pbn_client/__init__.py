@@ -20,6 +20,7 @@ from django_pbn_client.persistence import (
     download_pbn_objects,
     get_or_download,
     get_total_count,
+    sync_dictionary,
     upsert_pbn_object,
 )
 
@@ -37,5 +38,6 @@ __all__ = [
     "get_or_download",
     "get_total_count",
     "simple_page_getter",
+    "sync_dictionary",
     "upsert_pbn_object",
 ]

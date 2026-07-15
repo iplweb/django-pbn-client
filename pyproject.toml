@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-pbn-client"
-version = "0.2.0"
+version = "0.2.1"
 description = "Django persistence helpers for data downloaded from PBN"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"
@@ -45,13 +45,11 @@ dev = [
     "pytest-django>=4.9,<5",
 ]
 
-# Dev-only source override. The published `pbn-client` dependency above is what
-# real installs resolve from PyPI once that package is released. Until then this
-# points uv at the sibling checkout so the package is developable and testable
-# standalone. uv ignores [tool.uv.sources] when building/publishing wheels, so
-# the constraint in [project.dependencies] is unaffected for downstream users.
-[tool.uv.sources]
-pbn-client = { path = "../pbn-client", editable = true }
+# UWAGA: NIE dodawać tu [tool.uv.sources] z lokalnym path do pbn-client.
+# `pbn-client` jest publikowany na PyPI i stamtąd rozwiązywany. Lokalny
+# path-source psuje konsumpcję tego pakietu przez git-source (uv czyta go z
+# repozytorium i próbuje rozwiązać nieistniejący podkatalog). Do lokalnego
+# co-devu pbn-client użyj `uv pip install -e ../pbn-client` w swoim venv.
 
 [tool.hatch.build.targets.wheel]
 packages = ["src/django_pbn_client"]

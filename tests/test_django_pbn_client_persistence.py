@@ -1,13 +1,32 @@
+from contextlib import contextmanager
+
 import pytest
 from django.core.exceptions import ObjectDoesNotExist
 from django.db import IntegrityError, connection
 
+import django_pbn_client.persistence as persistence_module
 from django_pbn_client.persistence import (
     download_pbn_objects,
     get_or_download,
     get_total_count,
+    sync_dictionary,
     upsert_pbn_object,
 )
+
+
+@pytest.fixture
+def recording_atomic(monkeypatch):
+    """Zastąp ``transaction.atomic`` no-opem rejestrującym wejście, żeby bez DB
+    zweryfikować, że remote-fetch dzieje się PRZED otwarciem transakcji."""
+    order = []
+
+    @contextmanager
+    def fake_atomic(*args, **kwargs):
+        order.append("atomic-enter")
+        yield
+
+    monkeypatch.setattr(persistence_module.transaction, "atomic", fake_atomic)
+    return order
 
 
 def _element():
@@ -167,3 +186,67 @@ def test_get_or_download_downloads_and_saves_when_absent():
 
     assert result is saved_instance
     assert saved == [({"mongoId": "xyz", "status": "ACTIVE"}, Model, "C")]
+
+
+def test_sync_dictionary_fetches_before_transaction_and_propagates_result(
+    recording_atomic,
+):
+    order = recording_atomic
+
+    def fetch():
+        order.append("fetch")
+        return [{"code": "1"}, {"code": "2"}]
+
+    def upsert(payload):
+        order.append(("upsert", payload))
+        return "done"
+
+    result = sync_dictionary(fetch, upsert)
+
+    assert result == "done"
+    # Remote fetch MUSI się wykonać zanim otworzymy transakcję.
+    assert order == [
+        "fetch",
+        "atomic-enter",
+        ("upsert", [{"code": "1"}, {"code": "2"}]),
+    ]
+
+
+def test_sync_dictionary_materializes_lazy_iterator_before_transaction(
+    recording_atomic,
+):
+    order = recording_atomic
+
+    def fetch():
+        def gen():
+            order.append("fetch-yield-1")
+            yield 1
+            order.append("fetch-yield-2")
+            yield 2
+
+        return gen()
+
+    captured = {}
+
+    def upsert(payload):
+        captured["payload"] = payload
+
+    sync_dictionary(fetch, upsert)
+
+    # Generator w pełni skonsumowany PRZED transakcją (materializacja).
+    assert order == ["fetch-yield-1", "fetch-yield-2", "atomic-enter"]
+    assert captured["payload"] == [1, 2]
+    assert isinstance(captured["payload"], list)
+
+
+def test_sync_dictionary_passes_non_iterator_payload_through(recording_atomic):
+    captured = {}
+
+    # Dict jest Iterable, ale NIE Iterator — musi przejść bez zamiany na listę
+    # kluczy.
+    sync_dictionary(
+        lambda: {"languages": [1, 2]},
+        lambda payload: captured.setdefault("payload", payload),
+    )
+
+    assert captured["payload"] == {"languages": [1, 2]}
