@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "django-pbn-client"
-version = "0.2.1"
+version = "0.2.2"
 description = "Django persistence helpers for data downloaded from PBN"
 readme = "README.md"
 requires-python = ">=3.10,<3.15"

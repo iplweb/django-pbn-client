@@ -109,3 +109,18 @@ class BasePBNMongoDBModel(BasePBNModel):
     def is_deleted(self):
         """Whether PBN marks this object as deleted (``status == "DELETED"``)."""
         return self.status == "DELETED"
+
+    #: Prefix prepended to an object's display representation when PBN marks it
+    #: deleted. Hosts may override it on a subclass (e.g. for localization).
+    deleted_marker_prefix = "[❌ USUNIĘTY]"
+
+    def with_deleted_marker(self, value):
+        """Prefix ``value`` with :attr:`deleted_marker_prefix` when the object
+        is PBN-deleted; otherwise return ``value`` unchanged.
+
+        Centralizes the ``if is_deleted: f"[marker] {value}"`` pattern that host
+        ``__str__`` methods previously duplicated per mirror model.
+        """
+        if self.is_deleted:
+            return f"{self.deleted_marker_prefix} {value}"
+        return value

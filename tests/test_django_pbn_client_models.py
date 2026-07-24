@@ -113,3 +113,19 @@ def test_is_deleted_reflects_status():
     assert MirrorRecord(status="DELETED").is_deleted is True
     assert MirrorRecord(status="ACTIVE").is_deleted is False
     assert MirrorRecord(status="").is_deleted is False
+
+
+def test_with_deleted_marker_prefixes_only_when_deleted():
+    assert (
+        MirrorRecord(status="DELETED").with_deleted_marker("Jan Kowalski")
+        == "[❌ USUNIĘTY] Jan Kowalski"
+    )
+    assert MirrorRecord(status="ACTIVE").with_deleted_marker("Jan Kowalski") == (
+        "Jan Kowalski"
+    )
+
+
+def test_deleted_marker_prefix_is_overridable():
+    record = MirrorRecord(status="DELETED")
+    record.deleted_marker_prefix = "[DELETED]"
+    assert record.with_deleted_marker("x") == "[DELETED] x"
