@@ -35,6 +35,7 @@ dependencies = [
 ]
 
 [project.urls]
+Funding = "https://buymeacoffee.com/mpasternak"
 Homepage = "https://github.com/iplweb/django-pbn-client"
 Repository = "https://github.com/iplweb/django-pbn-client"
 Issues = "https://github.com/iplweb/django-pbn-client/issues"
